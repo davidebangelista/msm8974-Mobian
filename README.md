@@ -1,19 +1,21 @@
 # Nexus5-Mobian
 A repo to port the nexus 5 to mobian. 
+//-
 
-The mobain rootfs has been built. Now work is being done on:
-- GPU:n
-- CPU: p
-- Wi-Fi: n
-- BT: n
-- Modem: n
+You'll find repos for mobian build scripts and helpers, I'll keep it updated as I am constantly working on fixing.
 
-n = not working.
-p = partial
-y = yes
+Progress:
+- GPU:P
+- CPU: Y
+- Wi-Fi: P (No 5G bandwidth)
+- BT: Y
+- Modem: U
 
-I only have the base as only cpu rendering is avalible at the moment.
+N = not working.
+P = partial
+Y = yes
+U = Unknown
 
-You'll find a config for kernel 5.16. Firmware and drivers are an issue i'm trying to fix.
 
-I'm using the stock 5.16 kernel as pmos kernel isn't found.
+I'm using the latest pmos kernel, found here:
+https://github.com/msm8974-mainline/linux
