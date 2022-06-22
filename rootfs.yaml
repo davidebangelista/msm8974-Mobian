@@ -1,0 +1,83 @@
+{{- $architecture := or .architecture "armhf" -}}
+{{- $username := or .username "mobian" -}}
+{{- $password := or .password "1234" -}}
+{{- $hostname := or .hostname "mobian" -}}
+{{- $environment := or .environment "phosh" -}}
+{{- $contrib := or .contrib "true" -}}
+{{- $nonfree := or .nonfree "true" -}}
+{{- $ssh := or .ssh "" -}}
+{{- $zram:= or .zram "false" -}}
+{{- $debian_suite := or .debian_suite "bookworm" -}}
+{{- $suite := or .suite $debian_suite -}}
+{{- $rootfs := or .rootfs "rootfs.tar.gz" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: debootstrap
+    suite: {{ $debian_suite }}
+    components:
+      - main
+{{ if eq $contrib "true" }}
+      - contrib
+{{ end }}
+{{ if eq $nonfree "true" }}
+      - non-free
+{{ end }}
+    mirror: http://deb.debian.org/debian
+    variant: minbase
+    
+    
+  - action: overlay
+    description: Enable Mobian repository
+    source: overlays/apt/
+    destination: /etc/apt/
+
+  - action: run
+    description: Setup Mobian repository
+    chroot: true
+    script: scripts/setup-apt.sh {{ $debian_suite }} {{ $suite }} {{ $contrib }} {{ $nonfree }}
+
+
+    
+  - action: recipe
+    recipe: include/packages-{{ $environment }}.yaml
+    variables:
+      ssh: {{ $ssh }}
+
+  - action: run
+    description: Set up default user
+    chroot: true
+    script: scripts/setup-user.sh {{ $username }} {{ $password }}
+
+{{ if $ssh }}
+  - action: overlay
+    description: Set up sshd configuration
+    source: overlays/sshd_config.d/
+    destination: /etc/ssh/sshd_config.d/
+
+  - action: overlay
+    description: Set up user's ssh configuration
+    source: overlays/ssh/
+    destination: /home/{{ $username }}/.ssh/
+
+  - action: run
+    description: Set owner of .ssh
+    chroot: true
+    command: chown -R {{ $username }}:{{ $username }} /home/{{ $username }}/.ssh/
+{{ end }}
+
+{{ if eq $zram "true" }}
+  - action: overlay
+    description: setup zram devices
+    source: overlays/zram/
+    destination: /etc/
+{{ end }}
+
+  - action: run
+    description: Set up system
+    chroot: true
+    script: scripts/setup-system.sh {{ $hostname }}
+
+  - action: pack
+    file: {{ $rootfs }}

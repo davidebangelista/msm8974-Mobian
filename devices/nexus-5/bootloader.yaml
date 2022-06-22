@@ -1,0 +1,26 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "nexus-5" }}
+{{- $image := or .image "nexus-5" -}}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: run
+    description: Get firmware/config & install kernel
+    chroot: true
+    script: get-tweaks.sh {{ $device }} {{ $image }}
+    
+  - action: run
+    description: Get kernel and prepare
+    chroot: true
+    script: bootloader.sh {{ $device }} {{ $image }}  1
+    
+  - action: run
+    description: Extract boot images
+    chroot: false
+    script: extract-bootimg.sh {{ $device }} {{ $image }}
+
+  - action: run
+    description: Extract rootfs partition
+    postprocess: true
+    script: extract-rootfs.sh {{ $device }} {{ $image }}

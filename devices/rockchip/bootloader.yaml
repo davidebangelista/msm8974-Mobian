@@ -1,0 +1,16 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "pinephonepro" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: raw
+    description: Install bootloader
+    origin: filesystem
+    source: u-boot-rockchip-with-spl.bin
+    offset: 32768
+
+  - action: run
+    description: Cleanup temporary binaries
+    chroot: true
+    command: rm /u-boot-rockchip-with-spl.bin

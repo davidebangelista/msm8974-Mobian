@@ -1,0 +1,32 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $family := or .family "sunxi" }}
+{{- $nonfree := or .nonfree "false" -}}
+{{- $device := or .device "pinephone" }}
+{{- $environment := or .environment "phosh" -}}
+{{- $rootfs := or .rootfs "rootfs.tar.gz" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: unpack
+    file: {{ $rootfs }}
+
+{{ if eq $nonfree "true" }}
+  - action: run
+    description: Enable non-free Debian repo
+    chroot: true
+    command: sed -i 's/main$/main non-free/g' /etc/apt/sources.list
+{{ end }}
+
+  - action: recipe
+    recipe: devices/{{ $family }}/packages-{{ $environment }}.yaml
+    variables:
+      device: {{ $device }}
+
+  - action: run
+    description: Cleanup filesystem
+    chroot: true
+    script: scripts/rootfs-cleanup.sh
+
+  - action: pack
+    file: rootfs-{{ $device }}-{{ $environment }}.tar.gz

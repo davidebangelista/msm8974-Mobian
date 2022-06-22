@@ -1,0 +1,39 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $filesystem := or .filesystem "ext4" }}
+{{- $image := or .image "mobian-$device" -}}
+{{- $imagesize := or .imagesize "3.8GB" }}
+{{- $bootstart := or .bootstart "8MiB" }}
+{{- $rootstart := or .rootstart "512MiB" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: image-partition
+    imagename: {{ $image }}.img
+    imagesize: {{ $imagesize }}
+    partitiontype: msdos
+    mountpoints:
+      - mountpoint: /
+{{ if ne $rootstart "512MiB" }}
+        partition: installer
+{{ else }}
+        partition: rootfs
+{{ end }}
+      - mountpoint: /boot
+        partition: boot
+    partitions:
+      - name: boot
+        fs: ext4
+        start: {{ $bootstart }}
+        end: 512MiB
+        flags: [ boot ]
+      - name: rootfs
+{{ if ne $rootstart "512MiB" }}
+        fs: {{ $filesystem }}
+        start: 512MiB
+        end: {{ $rootstart }}
+      - name: installer
+{{ end }}
+        fs: {{ $filesystem }}
+        start: {{ $rootstart }}
+        end: 100%

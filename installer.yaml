@@ -1,0 +1,55 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $family := or .family "sunxi" }}
+{{- $nonfree := or .nonfree "false" -}}
+{{- $device := or .device "pinephone" }}
+{{- $partitiontable := or .partitiontable "mbr" }}
+{{- $filesystem := or .filesystem "ext4" }}
+{{- $environment := or .environment "phosh" -}}
+{{- $image := or .image "mobian-installer.img" -}}
+{{- $installfs := or .installfs "installfs.tar.gz" }}
+{{- $bootstart := or .bootstart "8MiB" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: unpack
+    file: {{ $installfs }}
+
+  - action: overlay
+    source: rootfs-{{ $device }}-{{ $environment }}.sqfs
+    destination: /var/lib/rootfs.sqfs
+
+  - action: recipe
+    recipe: include/partition-{{ $partitiontable }}.yaml
+    variables:
+      filesystem: {{ $filesystem }}
+      image: {{ $image }}
+      imagesize: 8GB
+      rootstart: 4GiB
+      bootstart: {{ $bootstart }}
+
+  - action: filesystem-deploy
+    description: Deploy filesystem onto image
+
+{{ if eq $nonfree "true" }}
+  - action: run
+    description: Enable non-free Debian repo
+    chroot: true
+    command: sed -i 's/main$/main non-free/g' /etc/apt/sources.list
+{{ end }}
+
+  - action: apt
+    recommends: false
+    description: Install device-specific packages
+    packages:
+      - {{ $device }}-support
+
+  - action: run
+    description: Prepare bootloader
+    chroot: true
+    script: devices/{{ $family }}/bootloader.sh {{ $device }}
+
+  - action: recipe
+    recipe: devices/{{ $family }}/bootloader.yaml
+    variables:
+      device: {{ $device }}

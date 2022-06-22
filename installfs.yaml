@@ -1,0 +1,57 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $username := or .username "mobian" -}}
+{{- $password := or .password "1234" -}}
+{{- $hostname := or .hostname "mobian" -}}
+{{- $debian_suite := or .debian_suite "bookworm" -}}
+{{- $suite := or .suite $debian_suite -}}
+{{- $installfs := or .installfs "installfs.tar.gz" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: debootstrap
+    suite: {{ $debian_suite }}
+    components:
+      - main
+    mirror: http://deb.debian.org/debian
+    variant: minbase
+
+  - action: overlay
+    description: Enable Mobian repository
+    source: overlays/apt/
+    destination: /etc/apt/
+
+  - action: run
+    description: Setup Mobian repository
+    chroot: true
+    script: scripts/setup-apt.sh {{ $debian_suite }} {{ $suite }} false false
+
+  - action: apt
+    recommends: false
+    description: Install installer packages
+    packages:
+      - calamares-settings-mobian
+      - device-tree-compiler
+      - initramfs-tools
+      - mobian-plymouth-theme
+      - squashfs-tools-ng
+      - u-boot-tools
+      - wget
+
+  - action: run
+    description: Set up system
+    chroot: true
+    script: scripts/setup-system.sh {{ $hostname }}
+
+  - action: run
+    description: Set up default user
+    chroot: true
+    script: scripts/setup-user.sh {{ $username }} {{ $password }}
+
+  - action: run
+    description: Set up installer
+    chroot: true
+    script: scripts/setup-installer.sh {{ $username }}
+
+  - action: pack
+    file: {{ $installfs }}

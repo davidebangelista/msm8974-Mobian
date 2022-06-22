@@ -1,0 +1,16 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "nexus-5" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: apt
+    recommends: false
+    description: Install device-specific packages
+    packages:
+      - libdrm-freedreno1 # {{ $device }}-support
+      - firefox-esr-mobile-config
+      - libqmi-utils
+      - mkbootimg
+      - mobian-phosh-phone
+      - p7zip-full

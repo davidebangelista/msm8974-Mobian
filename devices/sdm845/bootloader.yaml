@@ -1,0 +1,16 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "oneplus6" }}
+{{- $image := or .image "mobian-$device" -}}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: run
+    description: Extract boot images
+    chroot: false
+    script: extract-bootimg.sh {{ $device }} {{ $image }}
+
+  - action: run
+    description: Extract rootfs partition
+    postprocess: true
+    script: extract-rootfs.sh {{ $device }} {{ $image }}

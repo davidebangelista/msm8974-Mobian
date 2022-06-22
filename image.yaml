@@ -1,0 +1,62 @@
+{{- $architecture := or .architecture "armhf" -}}
+{{- $family := or .family "amd64" }}
+{{- $device := or .device "amd64" }}
+{{- $partitiontable := or .partitiontable "gpt" }}
+{{- $filesystem := or .filesystem "ext4" }}
+{{- $environment := or .environment "phosh" -}}
+{{- $image := or .image "mobian" -}}
+{{- $imagesize := or .imagesize "4GB" }}
+{{- $miniramfs := or .miniramfs "false" }}
+{{- $zram := or .zram "false" -}}
+{{- $bootstart := or .bootstart "8MiB" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: unpack
+    file: rootfs-{{ $device }}-{{ $environment }}.tar.gz
+
+  - action: recipe
+    recipe: include/partition-{{ $partitiontable }}.yaml
+    variables:
+      filesystem: {{ $filesystem }}
+      image: {{ $image }}
+      imagesize: {{ $imagesize }}
+      bootstart: {{ $bootstart }}
+
+  - action: filesystem-deploy
+    description: Deploy filesystem onto image
+
+{{ if eq $zram "true" }}
+  - action: run
+    description: setup zram (fstab)
+    chroot: true
+    script: scripts/setup-zram-mounts.sh
+{{ end }}
+
+{{ if eq $miniramfs "true" }}
+  - action: overlay
+    source: overlays/miniramfs
+    destination: usr/share/miniramfs
+
+  - action: run
+    description: Create miniramfs
+    chroot: true
+    script: scripts/create-miniramfs.sh
+
+  - action: run
+    description: Export miniramfs
+    chroot: false
+    command: cp ${ROOTDIR}/boot/miniramfs ${ARTIFACTDIR}/{{ $image }}.miniramfs
+{{ end }}
+
+  - action: run
+    description: Prepare bootloader
+    chroot: true
+    script: devices/{{ $family }}/bootloader.sh {{ $device }} {{ $miniramfs }}
+
+  - action: recipe
+    recipe: devices/{{ $family }}/bootloader.yaml
+    variables:
+      device: {{ $device }}
+      image: {{ $image }}

@@ -1,0 +1,16 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "librem5" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: raw
+    description: Install bootloader
+    origin: filesystem
+    source: librem5-boot.img
+    offset: 2048
+
+  - action: run
+    description: Cleanup temporary binaries
+    chroot: true
+    command: rm /librem5-boot.img

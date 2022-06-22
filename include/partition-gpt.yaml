@@ -1,0 +1,45 @@
+{{- $architecture := or .architecture "amd64" -}}
+{{- $filesystem := or .filesystem "ext4" }}
+{{- $image := or .image "mobian-$device" -}}
+{{- $imagesize := or .imagesize "3.8GB" }}
+{{- $bootstart := or .bootstart "0%" }}
+{{- $rootstart := or .rootstart "768MiB" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: image-partition
+    imagename: {{ $image }}.img
+    imagesize: {{ $imagesize }}
+    partitiontype: gpt
+    mountpoints:
+      - mountpoint: /
+{{ if ne $rootstart "768MiB" }}
+        partition: installer
+{{ else }}
+        partition: rootfs
+{{ end }}
+      - mountpoint: /boot
+        partition: boot
+      - mountpoint: /boot/efi
+        partition: esp
+    partitions:
+      - name: esp
+        fs: fat32
+        start: {{ $bootstart }}
+        end: 256MiB
+        flags: [ esp, boot ]
+      - name: boot
+        fs: ext4
+        start: 256MiB
+        end: 768MiB
+      - name: rootfs
+{{ if ne $rootstart "768MiB" }}
+        fs: {{ $filesystem }}
+        start: 768MiB
+        end: {{ $rootstart }}
+      - name: installer
+{{ end }}
+        fs: {{ $filesystem }}
+        start: {{ $rootstart }}
+        end: 100%
