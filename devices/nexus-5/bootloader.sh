@@ -4,6 +4,8 @@ DEVICE="$1"
 
 [ "$3" ] || exit 0
 
+systemctl enable rmtfs
+
 gsettings set org.gnome.desktop.interface show-battery-percentage true
 
 gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled false
