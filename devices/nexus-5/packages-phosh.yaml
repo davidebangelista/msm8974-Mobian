@@ -16,3 +16,5 @@ actions:
       - p7zip-full
       - qrtr
       - rmtfs
+      - wget
+      - libsdl2-ttf-2.0-0
