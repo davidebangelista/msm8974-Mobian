@@ -16,3 +16,4 @@ actions:
       - p7zip-full
       - qrtr
       - rmtfs
+      - wget
