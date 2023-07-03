@@ -1,17 +1,9 @@
-{{- $architecture := or .architecture "arm64" -}}
-{{- $ssh := or .ssh "" -}}
+{{- $architecture := or .architecture "amd64" -}}
+{{- $device := or .device "efi" }}
 
 architecture: {{ $architecture }}
 
 actions:
-  - action: apt
-    recommends: true
-    description: Install mobian-specific packages
-    packages:
-      # Additional software we don't want metapackages to depend on
-      - neofetch
-      - htop
-      - blueman
-{{ if $ssh }}
-      - openssh-server
-{{ end }}
+  # Nothing to be done, but we need an action anyway
+  - action: run
+    command: true

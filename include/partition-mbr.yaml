@@ -1,9 +1,16 @@
 {{- $architecture := or .architecture "arm64" -}}
 {{- $filesystem := or .filesystem "ext4" }}
 {{- $image := or .image "mobian-$device" -}}
-{{- $imagesize := or .imagesize "3.8GB" }}
-{{- $bootstart := or .bootstart "8MiB" }}
-{{- $rootstart := or .rootstart "512MiB" }}
+{{- $imagesize := or .imagesize "6GB" }}
+{{- $bootstart := or .bootstart "1MiB" }}
+{{- $installer := or .installer "false" }}
+
+{{- $rootstart := "512MiB" }}
+{{- $bootend := $rootstart }}
+
+{{- if eq $installer "true" }}
+{{-   $rootstart = "4.5GiB" }}
+{{- end }}
 
 architecture: {{ $architecture }}
 
@@ -14,23 +21,25 @@ actions:
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
-{{ if ne $rootstart "512MiB" }}
+{{ if eq $installer "true" }}
         partition: installer
 {{ else }}
         partition: rootfs
 {{ end }}
+        options: [ "x-systemd.growfs" ]
       - mountpoint: /boot
         partition: boot
+        options: [ "x-systemd.growfs" ]
     partitions:
       - name: boot
         fs: ext4
         start: {{ $bootstart }}
-        end: 512MiB
+        end: {{ $bootend }}
         flags: [ boot ]
       - name: rootfs
-{{ if ne $rootstart "512MiB" }}
+{{ if eq $installer "true" }}
         fs: {{ $filesystem }}
-        start: 512MiB
+        start: {{ $bootend }}
         end: {{ $rootstart }}
       - name: installer
 {{ end }}

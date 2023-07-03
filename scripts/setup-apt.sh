@@ -9,8 +9,8 @@ COMPONENTS="main"
 [ "$CONTRIB" = "true" ] && COMPONENTS="$COMPONENTS contrib"
 [ "$NONFREE" = "true" ] && COMPONENTS="$COMPONENTS non-free"
 
-# Add debian-security for bullseye; note that only the main component is supported
-if [ "$DEBIAN_SUITE" = "bullseye" ]; then
+# Add debian-security for bullseye & bookworm; note that only the main component is supported
+if [ "$DEBIAN_SUITE" = "bullseye" ] || [ "$DEBIAN_SUITE" = "bookworm" ]; then
     echo "deb http://security.debian.org/ $DEBIAN_SUITE-security $COMPONENTS" >> /etc/apt/sources.list
 fi
 

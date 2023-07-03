@@ -1,16 +1,22 @@
 {{- $architecture := or .architecture "arm64" -}}
 {{- $device := or .device "librem5" }}
+{{- $bootstart := or .bootstart "1MiB" }}
 
 architecture: {{ $architecture }}
 
 actions:
+  - action: run
+    description: Download bootloader
+    chroot: true
+    script: bootloader.sh {{ $bootstart }}
+
   - action: raw
     description: Install bootloader
     origin: filesystem
-    source: librem5-boot.img
-    offset: 2048
+    source: u-boot-librem5.imx
+    offset: {{ sector 66 }}
 
   - action: run
     description: Cleanup temporary binaries
     chroot: true
-    command: rm /librem5-boot.img
+    command: rm /u-boot-librem5.imx

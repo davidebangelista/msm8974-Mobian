@@ -5,13 +5,9 @@
 apt -y autoremove --purge
 apt clean
 
-# Remove SSH keys and machine ID so they get generated on first boot
-rm -f /etc/ssh/ssh_host_* \
-      /etc/machine-id \
-      /var/lib/dbus/machine-id
-
-# Disable getty on tty1, as we won't connect in console mode anyway
-systemctl disable getty@.service
+# Remove machine ID so it gets generated on first boot
+rm -f /var/lib/dbus/machine-id
+echo uninitialized > /etc/machine-id
 
 # FIXME: these are automatically installed on first boot, and block
 # the system startup for over 1 minute! Find out why this happens and

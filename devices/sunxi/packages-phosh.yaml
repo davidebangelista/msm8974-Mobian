@@ -6,13 +6,11 @@ architecture: {{ $architecture }}
 actions:
   - action: apt
     recommends: false
-    description: Install device-specific packages
+    description: Install device-specific packages for Phosh
     packages:
-      - {{ $device }}-support
 {{ if eq $device "pinephone" }}
       - mobian-phosh-phone
       - firefox-esr-mobile-config
 {{ end }}
       - imagemagick
       - megapixels
-      - powersupply

@@ -2,7 +2,7 @@
 {{- $username := or .username "mobian" -}}
 {{- $password := or .password "1234" -}}
 {{- $hostname := or .hostname "mobian" -}}
-{{- $debian_suite := or .debian_suite "bookworm" -}}
+{{- $debian_suite := or .debian_suite "trixie" -}}
 {{- $suite := or .suite $debian_suite -}}
 {{- $installfs := or .installfs "installfs.tar.gz" }}
 
@@ -33,7 +33,7 @@ actions:
       - calamares-settings-mobian
       - device-tree-compiler
       - initramfs-tools
-      - mobian-plymouth-theme
+      - plymouth-theme-mobian
       - squashfs-tools-ng
       - u-boot-tools
       - wget

@@ -4,8 +4,11 @@
 architecture: {{ $architecture }}
 
 actions:
-  # Nothing to be done, but we need an action anyway
-- action: run
-    description: Extract boot images
+  - action: overlay
+    description: GRUB configuration file
+    source: overlays/bootloader
+
+  - action: run
+    description: Install and configure GRUB
     chroot: true
     script: bootloader.sh

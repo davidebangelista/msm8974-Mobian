@@ -1,13 +1,13 @@
-{{- $architecture := or .architecture "armhf" -}}
+{{- $architecture := or .architecture "arm64" -}}
 {{- $username := or .username "mobian" -}}
 {{- $password := or .password "1234" -}}
 {{- $hostname := or .hostname "mobian" -}}
 {{- $environment := or .environment "phosh" -}}
-{{- $contrib := or .contrib "true" -}}
-{{- $nonfree := or .nonfree "true" -}}
+{{- $contrib := or .contrib "false" -}}
+{{- $nonfree := or .nonfree "false" -}}
 {{- $ssh := or .ssh "" -}}
 {{- $zram:= or .zram "false" -}}
-{{- $debian_suite := or .debian_suite "bookworm" -}}
+{{- $debian_suite := or .debian_suite "trixie" -}}
 {{- $suite := or .suite $debian_suite -}}
 {{- $rootfs := or .rootfs "rootfs.tar.gz" }}
 
@@ -22,28 +22,38 @@ actions:
       - contrib
 {{ end }}
 {{ if eq $nonfree "true" }}
-      - non-free
+      - non-free-firmware
 {{ end }}
     mirror: http://deb.debian.org/debian
     variant: minbase
-    
-    
+
+  - action: run
+    description: Fix build on usr-merged systems
+    chroot: true
+    command: apt-get -y -f install
+
   - action: overlay
     description: Enable Mobian repository
     source: overlays/apt/
     destination: /etc/apt/
+
+  - action: overlay
+    description: Enable resize of root partition
+    source: overlays/repart.d/
+    destination: /etc/repart.d/
 
   - action: run
     description: Setup Mobian repository
     chroot: true
     script: scripts/setup-apt.sh {{ $debian_suite }} {{ $suite }} {{ $contrib }} {{ $nonfree }}
 
-
-    
   - action: recipe
-    recipe: include/packages-{{ $environment }}.yaml
+    recipe: include/packages-base.yaml
     variables:
       ssh: {{ $ssh }}
+
+  - action: recipe
+    recipe: include/packages-{{ $environment }}.yaml
 
   - action: run
     description: Set up default user

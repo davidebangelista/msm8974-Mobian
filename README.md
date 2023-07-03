@@ -13,7 +13,7 @@ To build the image, you need to have `debos` and `bmaptool`. On a debian-based
 system, install these dependencies by typing the following command in a terminal:
 
 ```
-sudo apt install debos bmap-tools f2fs-tools
+sudo apt install debos bmap-tools android-sdk-libsparse-utils xz-utils f2fs-tools
 ```
 
 Do note that the debos provided in Debian 10 (Buster) is not new enough
@@ -78,17 +78,11 @@ sudo dd if=<image> of=/dev/<sdcard> bs=1M
 
 **CAUTION: This will format the SD card and erase all its contents!!!**
 
-## Third-party software
-
-The project's Wiki provides
-[a list](https://gitlab.com/mobian1/wiki/-/wikis/Software) of software
-packages modified or created to work on mobile devices.
-
 ## Contributing
 
 If you want to help with this project, please have a look at the
-[roadmap](https://gitlab.com/mobian1/wiki/-/wikis/Development-Roadmap) and
-[open issues](https://gitlab.com/mobian1/issues).
+[roadmap](https://wiki.debian.org/Teams/Mobian/Roadmap) and
+[open issues](https://salsa.debian.org/groups/Mobian-team/-/issues).
 
 In case you need more information, feel free to get in touch with the developers
 on the Pine64 [forum](https://forum.pine64.org/showthread.php?tid=9016) and/or

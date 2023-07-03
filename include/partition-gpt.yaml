@@ -1,9 +1,36 @@
-{{- $architecture := or .architecture "amd64" -}}
+{{- $architecture := or .architecture "arm64" -}}
 {{- $filesystem := or .filesystem "ext4" }}
 {{- $image := or .image "mobian-$device" -}}
-{{- $imagesize := or .imagesize "3.8GB" }}
-{{- $bootstart := or .bootstart "0%" }}
-{{- $rootstart := or .rootstart "768MiB" }}
+{{- $imagesize := or .imagesize "6GB" }}
+{{- $bootstart := or .bootstart "1MiB" }}
+{{- $installer := or .installer "false" }}
+
+{{- $espend := $bootstart }}
+{{- $has_esp_partition := "false" }}
+{{- $parttype := "invalid" }}
+{{- $rootstart := "512MiB" }}
+
+{{- if eq $architecture "amd64" }}
+{{-   $has_esp_partition = "true" }}
+{{-   $parttype = "4f68bce3-e8cd-4db1-96e7-fbcaf984b709" }}
+{{- else if eq $architecture "arm64" }}
+{{-   $parttype = "b921b045-1df0-41c3-af44-4c6f280d3fae" }}
+{{- else if eq $architecture "armhf" }}
+{{-   $parttype = "69dad710-2ce4-4e3c-b16c-21a1d49abed3" }}
+{{- else if eq $architecture "riscv64" }}
+{{-   $parttype = "72ec70a6-cf74-40e6-bd49-4bda08e8f224" }}
+{{- end }}
+
+{{- if eq $has_esp_partition "true" }}
+{{-   $espend = "256MiB" }}
+{{-   $rootstart = "768MiB" }}
+{{- end }}
+
+{{- $bootend := $rootstart }}
+
+{{- if eq $installer "true" }}
+{{-   $rootstart = "4.5GiB" }}
+{{- end }}
 
 architecture: {{ $architecture }}
 
@@ -14,32 +41,41 @@ actions:
     partitiontype: gpt
     mountpoints:
       - mountpoint: /
-{{ if ne $rootstart "768MiB" }}
+{{ if eq $installer "true" }}
         partition: installer
 {{ else }}
         partition: rootfs
 {{ end }}
+        options: [ "x-systemd.growfs" ]
       - mountpoint: /boot
         partition: boot
+        options: [ "x-systemd.growfs" ]
+{{ if eq $has_esp_partition "true" }}
       - mountpoint: /boot/efi
         partition: esp
+{{ end }}
     partitions:
+{{ if eq $has_esp_partition "true" }}
       - name: esp
         fs: fat32
         start: {{ $bootstart }}
-        end: 256MiB
+        end: {{ $espend }}
         flags: [ esp, boot ]
+{{ end }}
       - name: boot
         fs: ext4
-        start: 256MiB
-        end: 768MiB
+        start: {{ $espend }}
+        end: {{ $bootend }}
+        flags: [ boot ]
       - name: rootfs
-{{ if ne $rootstart "768MiB" }}
+{{ if eq $installer "true" }}
         fs: {{ $filesystem }}
-        start: 768MiB
+        start: {{ $bootend }}
         end: {{ $rootstart }}
+        parttype: {{ $parttype }}
       - name: installer
 {{ end }}
         fs: {{ $filesystem }}
         start: {{ $rootstart }}
         end: 100%
+        parttype: {{ $parttype }}

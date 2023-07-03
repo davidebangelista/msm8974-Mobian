@@ -1,6 +1,6 @@
 {{- $architecture := or .architecture "armhf" -}}
-{{- $family := or .family "amd64" }}
-{{- $device := or .device "amd64" }}
+{{- $family := or .family "sunxi" }}
+{{- $device := or .device "pinephone" }}
 {{- $partitiontable := or .partitiontable "gpt" }}
 {{- $filesystem := or .filesystem "ext4" }}
 {{- $environment := or .environment "phosh" -}}
@@ -8,24 +8,57 @@
 {{- $imagesize := or .imagesize "4GB" }}
 {{- $miniramfs := or .miniramfs "false" }}
 {{- $zram := or .zram "false" -}}
-{{- $bootstart := or .bootstart "8MiB" }}
+{{- $bootstart := or .bootstart "1MiB" }}
+{{- $nonfree := or .nonfree "false" -}}
+{{- $rootfs := or .rootfs "rootfs.tar.gz" }}
+{{- $password := or .password "1234" -}}
+{{- $crypt_password := or .crypt_password $password -}}
+{{- $crypt_root := or .crypt_root "false" -}}
 
 architecture: {{ $architecture }}
 
 actions:
   - action: unpack
-    file: rootfs-{{ $device }}-{{ $environment }}.tar.gz
+    file: {{ $rootfs }}
+
+{{ if eq $nonfree "true" }}
+  - action: run
+    description: Enable non-free-firmware Debian repo
+    chroot: true
+    command: sed -i 's/main$/main non-free-firmware/g' /etc/apt/sources.list
+{{ end }}
 
   - action: recipe
     recipe: include/partition-{{ $partitiontable }}.yaml
     variables:
+      bootstart: {{ $bootstart }}
       filesystem: {{ $filesystem }}
       image: {{ $image }}
       imagesize: {{ $imagesize }}
-      bootstart: {{ $bootstart }}
+      installer: "false"
 
   - action: filesystem-deploy
     description: Deploy filesystem onto image
+{{ if eq $crypt_root "true" }}
+    setup-fstab: false
+
+  - action: run
+    description: Encrypt root filesystem
+    label: setup-luks
+    script: scripts/setup-luks.sh {{ $password }}
+
+  - action: recipe
+    recipe: include/packages-fde.yaml
+
+{{ end }}
+
+{{ if eq $filesystem "f2fs" }}
+  - action: apt
+    recommends: false
+    description: Install F2FS tools
+    packages:
+      - f2fs-tools
+{{ end }}
 
 {{ if eq $zram "true" }}
   - action: run
@@ -34,15 +67,28 @@ actions:
     script: scripts/setup-zram-mounts.sh
 {{ end }}
 
+  - action: recipe
+    recipe: devices/{{ $family }}/packages-base.yaml
+    variables:
+      device: {{ $device }}
+      nonfree: {{ $nonfree }}
+
+  - action: recipe
+    recipe: devices/{{ $family }}/packages-{{ $environment }}.yaml
+    variables:
+      device: {{ $device }}
+
 {{ if eq $miniramfs "true" }}
-  - action: overlay
-    source: overlays/miniramfs
-    destination: usr/share/miniramfs
+  - action: apt
+    recommends: true
+    description: install miniramfs
+    packages:
+      - miniramfs
 
   - action: run
     description: Create miniramfs
     chroot: true
-    script: scripts/create-miniramfs.sh
+    command: /usr/sbin/update-miniramfs -u
 
   - action: run
     description: Export miniramfs
@@ -51,12 +97,14 @@ actions:
 {{ end }}
 
   - action: run
-    description: Prepare bootloader
+    description: Cleanup filesystem
     chroot: true
-    script: devices/{{ $family }}/bootloader.sh {{ $device }} {{ $miniramfs }}
+    script: scripts/rootfs-cleanup.sh
 
   - action: recipe
     recipe: devices/{{ $family }}/bootloader.yaml
     variables:
       device: {{ $device }}
       image: {{ $image }}
+      bootstart: {{ $bootstart }}
+      miniramfs: {{ $miniramfs }}
