@@ -1,7 +1,7 @@
 # mobian-recipes
 
 A set of [debos](https://github.com/go-debos/debos) recipes for building a
-debian-based image for mobile phones, specily targetting msm8974 Phones.
+debian-based image for mobile phones, specifically targetting msm8974 Phones.
 
 The default user is `mobian` with password `1234`.
 
@@ -26,7 +26,6 @@ If your system isn't debian-based (or if you choose to install `debos` without
 using `apt`, which is a terrible idea), please make sure you also install the
 following required packages:
 - `debootstrap`
-- `qemu-system-x86`
 - `qemu-user-static`
 - `binfmt-support`
 - `squashfs-tools-ng` (only required for generating installer images)
@@ -41,7 +40,7 @@ Connect your phone on fastboot mode into your computer, and type the following c
 
 ```
 fastboot flash boot <boot>
-fastboot flash userdata <root)
+fastboot flash userdata <root>
 ```
 
 
