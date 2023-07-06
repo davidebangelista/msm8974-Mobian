@@ -1,0 +1,14 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $device := or .device "sdm845" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: apt
+    recommends: false
+    description: Install device-specific packages for Phosh
+    packages:
+      - firefox-esr-mobile-config
+      - mobian-phosh-phone
+      - abootimg
+      - libdrm-freedreno1 # {{ $device }}-support
