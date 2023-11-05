@@ -1,0 +1,14 @@
+{{- $architecture := or .architecture "arm64" -}}
+{{- $ssh := or .ssh "" -}}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: apt
+    recommends: false
+    description: Install base packages
+    packages:
+      - mobian-base
+{{ if $ssh }}
+      - openssh-server
+{{ end }}
