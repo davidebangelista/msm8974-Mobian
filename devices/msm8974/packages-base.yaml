@@ -14,7 +14,7 @@ actions:
     description: Install device-specific base packages
     packages:
       - p7zip-full
-      - qrtr
+      - qrtr-tools
       - rmtfs
       - wget
       - libsdl2-ttf-2.0-0
